@@ -20,6 +20,7 @@ from utils.sh_utils import RGB2SH
 from simple_knn._C import distCUDA2
 from utils.graphics_utils import BasicPointCloud
 from utils.general_utils import strip_symmetric, build_scaling_rotation
+import pandas as pd
 
 class GaussianModel:
 
@@ -120,6 +121,17 @@ class GaussianModel:
     def oneupSHdegree(self):
         if self.active_sh_degree < self.max_sh_degree:
             self.active_sh_degree += 1
+
+    def create_from_csv(self,csv_path,spatial_lr_scale):
+        #Assuming spatial lr_scale is relevent to our model
+        self.spatial_lr_scale=spatial_lr_scale
+        dataset=pd.read_csv(csv_path)
+        # Convert the dataframe to a PyTorch tensor
+        xyz = torch.tensor(dataset[['x', 'y', 'z']].values).float().cuda()
+        density = torch.tensor(dataset[['density']].values).float().cuda()
+        # Initialize the model with the CSV data
+        # Placeholder: the actual initialization will depend on your model's requirements
+        self.initialize_model(xyz, density)
 
     def create_from_pcd(self, pcd : BasicPointCloud, spatial_lr_scale : float):
         self.spatial_lr_scale = spatial_lr_scale
