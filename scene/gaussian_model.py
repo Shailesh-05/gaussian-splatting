@@ -129,6 +129,8 @@ class GaussianModel:
         # Convert the dataframe to a PyTorch tensor
         xyz = torch.tensor(dataset[['x', 'y', 'z']].values).float().cuda()
         density = torch.tensor(dataset[['density']].values).float().cuda()
+
+        
         # Initialize the model with the CSV data
         # Placeholder: the actual initialization will depend on your model's requirements
         self.initialize_model(xyz, density)

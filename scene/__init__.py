@@ -29,6 +29,7 @@ class Scene:
         self.model_path = args.model_path
         self.loaded_iter = None
         self.gaussians = gaussians
+        self.csv_path=args.csv_path
 
         if load_iteration:
             if load_iteration == -1:
@@ -81,7 +82,9 @@ class Scene:
                                                            "point_cloud.ply"))
         else:
             # self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent)
-            self.gaussians.create_from_csv(args.csv_path, self.cameras_extent)
+            self.gaussians.create_from_csv(self.csv_path,spatial_lr_scale=1.0)   
+  
+
 
     def save(self, iteration):
         point_cloud_path = os.path.join(self.model_path, "point_cloud/iteration_{}".format(iteration))
@@ -92,3 +95,6 @@ class Scene:
 
     def getTestCameras(self, scale=1.0):
         return self.test_cameras[scale]
+    
+     # self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent)
+     # self.gaussians.create_from_csv(args.csv_path, self.cameras_extent)
