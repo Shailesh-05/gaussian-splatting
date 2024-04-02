@@ -80,6 +80,27 @@ def read_next_bytes(fid, num_bytes, format_char_sequence, endian_character="<"):
     data = fid.read(num_bytes)
     return struct.unpack(endian_character + format_char_sequence, data)
 
+def read_points3D_csv(path):
+   xyzs=None
+   rgbs=None
+   errors=None
+   num_points=0
+   DF=pd.read_csv(path,"pcloud","ngp_1.csv")
+   # xyzs= DF[['x','y','z']]
+   # xyz = torch.tensor(dataset[['x', 'y', 'z']].values).float().cuda()
+   # opacities = torch.tensor(dataset[['density']].values).float().cuda()
+   xyzs = np.empty((num_points, 3))
+   rgbs = np.empty((num_points, 3))
+   count=0
+   for i in range(len(DF)):
+       xyz = np.array(tuple(map(float, DF.iloc[i,['x','y','z']])))
+       rgb=  np.array(tuple(map(float, DF.iloc[i,['r','g','b']])))
+       xyzs[count]=xyz
+       rgbs[count]=rgb
+       count+=1
+   return xyzs,rgbs
+
+
 def read_points3D_text(path):
     """
     see: src/base/reconstruction.cc
