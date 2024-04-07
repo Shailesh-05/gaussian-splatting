@@ -81,8 +81,8 @@ class Scene:
                                                            "iteration_" + str(self.loaded_iter),
                                                            "point_cloud.ply"))
         else:
-            # self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent)
-            self.gaussians.create_from_csv(self.csv_path,spatial_lr_scale=1.0)   
+            self.gaussians.create_from_pcd(scene_info.point_cloud, self.cameras_extent)
+            # self.gaussians.create_from_csv(self.csv_path,spatial_lr_scale=1.0)   
   
 
 

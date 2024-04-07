@@ -22,6 +22,7 @@ from pathlib import Path
 from plyfile import PlyData, PlyElement
 from utils.sh_utils import SH2RGB
 from scene.gaussian_model import BasicPointCloud
+import pandas as pd
 
 class CameraInfo(NamedTuple):
     uid: int
@@ -104,30 +105,62 @@ def readColmapCameras(cam_extrinsics, cam_intrinsics, images_folder):
     sys.stdout.write('\n')
     return cam_infos
 
-def fetchPly(path):
-    plydata = PlyData.read(path)
-    vertices = plydata['vertex']
-    positions = np.vstack([vertices['x'], vertices['y'], vertices['z']]).T
-    colors = np.vstack([vertices['red'], vertices['green'], vertices['blue']]).T / 255.0
-    normals = np.vstack([vertices['nx'], vertices['ny'], vertices['nz']]).T
+# def fetchPly(path):
+#     plydata = PlyData.read(path)
+#     vertices = plydata['vertex']
+#     positions = np.vstack([vertices['x'], vertices['y'], vertices['z']]).T
+#     colors = np.vstack([vertices['red'], vertices['green'], vertices['blue']]).T / 255.0
+#     normals = np.vstack([vertices['nx'], vertices['ny'], vertices['nz']]).T
+#     return BasicPointCloud(points=positions, colors=colors, normals=normals)
+
+# def storePly(path, xyz, rgb):
+#     # Define the dtype for the structured array
+#     dtype = [('x', 'f4'), ('y', 'f4'), ('z', 'f4'),
+#             ('nx', 'f4'), ('ny', 'f4'), ('nz', 'f4'),
+#             ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]
+    
+#     normals = np.zeros_like(xyz)
+
+#     elements = np.empty(xyz.shape[0], dtype=dtype)
+#     attributes = np.concatenate((xyz, normals, rgb), axis=1)
+#     elements[:] = list(map(tuple, attributes))
+
+#     # Create the PlyData object and write to file
+#     vertex_element = PlyElement.describe(elements, 'vertex')
+#     ply_data = PlyData([vertex_element])
+#     ply_data.write(path)
+
+
+def fetchCSV(path):
+    # Read the CSV file into a DataFrame
+    df = pd.read_csv(path)
+    
+    # Extract position coordinates and RGB colors
+    positions = df[['x', 'y', 'z']].to_numpy()
+    colors = df[['r', 'g', 'b']].to_numpy() / 255.0  # Normalize colors
+    
+    # Assuming that normals are not provided in the CSV, so we create a placeholder
+    normals = np.zeros_like(positions)
+    
+    # Return a BasicPointCloud object or similar structure
     return BasicPointCloud(points=positions, colors=colors, normals=normals)
 
-def storePly(path, xyz, rgb):
-    # Define the dtype for the structured array
-    dtype = [('x', 'f4'), ('y', 'f4'), ('z', 'f4'),
-            ('nx', 'f4'), ('ny', 'f4'), ('nz', 'f4'),
-            ('red', 'u1'), ('green', 'u1'), ('blue', 'u1')]
+def storeCSV(path, xyz, rgb):
+    # Assuming that normals and densities are not to be stored in the CSV
+    # Prepare the DataFrame
+    df = pd.DataFrame({
+        'x': xyz[:, 0],
+        'y': xyz[:, 1],
+        'z': xyz[:, 2],
+        'densities': np.zeros(xyz.shape[0]),  # Placeholder for densities
+        'r': rgb[:, 0],
+        'g': rgb[:, 1],
+        'b': rgb[:, 2]
+    })
     
-    normals = np.zeros_like(xyz)
+    # Write the DataFrame to a CSV file
+    df.to_csv(path, index=False)
 
-    elements = np.empty(xyz.shape[0], dtype=dtype)
-    attributes = np.concatenate((xyz, normals, rgb), axis=1)
-    elements[:] = list(map(tuple, attributes))
-
-    # Create the PlyData object and write to file
-    vertex_element = PlyElement.describe(elements, 'vertex')
-    ply_data = PlyData([vertex_element])
-    ply_data.write(path)
 
 def readColmapSceneInfo(path, images, eval, llffhold=8):
     try:
@@ -155,17 +188,18 @@ def readColmapSceneInfo(path, images, eval, llffhold=8):
     nerf_normalization = getNerfppNorm(train_cam_infos)
 
     ply_path = os.path.join(path, "sparse/0/points3D.ply")
+    csv_path = os.path.join(path,"sparse/0/ngp_1_pruned.csv")
     bin_path = os.path.join(path, "sparse/0/points3D.bin")
     txt_path = os.path.join(path, "sparse/0/points3D.txt")
-    if not os.path.exists(ply_path):
+    if not os.path.exists(csv_path):                      
         print("Converting point3d.bin to .ply, will happen only the first time you open the scene.")
         try:
             xyz, rgb, _ = read_points3D_binary(bin_path)
         except:
             xyz, rgb, _ = read_points3D_text(txt_path)
-        storePly(ply_path, xyz, rgb)
+        storeCSV(csv_path, xyz, rgb)
     try:
-        pcd = fetchPly(ply_path)
+        pcd = fetchCSV(csv_path)
     except:
         pcd = None
 

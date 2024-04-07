@@ -122,32 +122,32 @@ class GaussianModel:
         if self.active_sh_degree < self.max_sh_degree:
             self.active_sh_degree += 1
 
-    def create_from_csv(self,csv_path,spatial_lr_scale):
-        #Assuming spatial lr_scale is relevent to our model
-        self.spatial_lr_scale=spatial_lr_scale
-        dataset=pd.read_csv(csv_path)
-        # Convert the dataframe to a PyTorch tensor
-        xyz = torch.tensor(dataset[['x', 'y', 'z']].values).float().cuda()
-        opacities = torch.tensor(dataset[['density']].values).float().cuda()
-        opacities=self.inverse_sigmoid(opacities)
-        colors = RGB2SH(torch.tensor(dataset[['r', 'g', 'b']].values).float().cuda())
-        num_sh_coeffs=colors.shape[1]
-        features = torch.zeros((xyz.shape[0], 3, num_sh_coeffs)).float().cuda()
-        features[:, :, :num_sh_coeffs] =colors
-        # features[:,]
-        dist2 = torch.clamp_min(distCUDA2(xyz), 1e-8)
-        scales = torch.log(torch.sqrt(dist2))[..., None].repeat(1, 3)
-        rots = torch.zeros((xyz.shape[0], 4), device="cuda")
-        rots[:, 0] = 1
-        # Initialize the model with the CSV data
-        # Placeholder: the actual initialization will depend on your model's requirements
-        self._xyz = nn.Parameter(xyz.requires_grad_(True))
-        self._features_dc = nn.Parameter(features[:, :, 0:1].transpose(1, 2).contiguous().requires_grad_(True))
-        self._features_rest = nn.Parameter(features[:, :, 1:].transpose(1, 2).contiguous().requires_grad_(True))
-        self._scaling = nn.Parameter(scales.requires_grad_(True))
-        self._rotation = nn.Parameter(rots.requires_grad_(True))
-        self._opacity = nn.Parameter(opacities.unsqueeze(1).requires_grad_(True))  # Opacity should be (N, 1) tensor
-        self.max_radii2D = torch.zeros((xyz.shape[0]), device="cuda")
+    # def create_from_csv(self,csv_path,spatial_lr_scale):
+    #     #Assuming spatial lr_scale is relevent to our model
+    #     self.spatial_lr_scale=spatial_lr_scale
+    #     dataset=pd.read_csv(csv_path)
+    #     # Convert the dataframe to a PyTorch tensor
+    #     xyz = torch.tensor(dataset[['x', 'y', 'z']].values).float().cuda()
+    #     opacities = torch.tensor(dataset[['density']].values).float().cuda()
+    #     opacities=self.inverse_sigmoid(opacities)
+    #     colors = RGB2SH(torch.tensor(dataset[['r', 'g', 'b']].values).float().cuda())
+    #     num_sh_coeffs=colors.shape[1]
+    #     features = torch.zeros((xyz.shape[0], 3, num_sh_coeffs)).float().cuda()
+    #     features[:, :, :num_sh_coeffs] =colors
+    #     # features[:,]
+    #     dist2 = torch.clamp_min(distCUDA2(xyz), 1e-8)
+    #     scales = torch.log(torch.sqrt(dist2))[..., None].repeat(1, 3)
+    #     rots = torch.zeros((xyz.shape[0], 4), device="cuda")
+    #     rots[:, 0] = 1
+    #     # Initialize the model with the CSV data
+    #     # Placeholder: the actual initialization will depend on your model's requirements
+    #     self._xyz = nn.Parameter(xyz.requires_grad_(True))
+    #     self._features_dc = nn.Parameter(features[:, :, 0:1].transpose(1, 2).contiguous().requires_grad_(True))
+    #     self._features_rest = nn.Parameter(features[:, :, 1:].transpose(1, 2).contiguous().requires_grad_(True))
+    #     self._scaling = nn.Parameter(scales.requires_grad_(True))
+    #     self._rotation = nn.Parameter(rots.requires_grad_(True))
+    #     self._opacity = nn.Parameter(opacities.unsqueeze(1).requires_grad_(True))  # Opacity should be (N, 1) tensor
+    #     self.max_radii2D = torch.zeros((xyz.shape[0]), device="cuda")
         
     def create_from_pcd(self, pcd : BasicPointCloud, spatial_lr_scale : float):
         self.spatial_lr_scale = spatial_lr_scale
