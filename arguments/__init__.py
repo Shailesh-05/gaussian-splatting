@@ -47,13 +47,14 @@ class ParamGroup:
 class ModelParams(ParamGroup): 
     def __init__(self, parser, sentinel=False):
         self.sh_degree = 3
-        self._source_path = ""
+        self._source_path = "/content/drive/MyDrive/orchids" #Use /input_folder/lego for lego
         self._model_path = ""
         self._images = "images"
         self._resolution = -1
         self._white_background = False
         self.data_device = "cuda"
         self.eval = False
+        self._csv_path="/content/drive/MyDrive/orchids/orchid_ngp_52.csv" #Use /input_folder/lego for lego
         super().__init__(parser, "Loading Parameters", sentinel)
 
     def extract(self, args):

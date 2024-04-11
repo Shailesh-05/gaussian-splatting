@@ -17,6 +17,7 @@ from scene.colmap_loader import read_extrinsics_text, read_intrinsics_text, qvec
     read_extrinsics_binary, read_intrinsics_binary, read_points3D_binary, read_points3D_text
 from utils.graphics_utils import getWorld2View2, focal2fov, fov2focal
 import numpy as np
+import pandas as pd
 import json
 from pathlib import Path
 from plyfile import PlyData, PlyElement
@@ -265,17 +266,16 @@ def readNerfSyntheticInfo(path, white_background, eval, extension=".png"):
     nerf_normalization = getNerfppNorm(train_cam_infos)
 
     ply_path = os.path.join(path, "points3d.ply")
+    csv_path = os.path.join(path,"orchid_ngp_52.csv")
     if not os.path.exists(ply_path):
         # Since this data set has no colmap data, we start with random points
-        num_pts = 100_000
-        print(f"Generating random point cloud ({num_pts})...")
-        
-        # We create random points inside the bounds of the synthetic Blender scenes
-        xyz = np.random.random((num_pts, 3)) * 2.6 - 1.3
-        shs = np.random.random((num_pts, 3)) / 255.0
-        pcd = BasicPointCloud(points=xyz, colors=SH2RGB(shs), normals=np.zeros((num_pts, 3)))
+        DF=pd.read_csv(csv_path)
+        xyz=DF[['z','x','y']].to_numpy()*3
+        rgb=DF[['r','g','b']].to_numpy() 
+        num_pts=len(DF['x'])
+        pcd= BasicPointCloud(points=xyz, colors=rgb,normals=np.zeros((num_pts, 3)))
 
-        storePly(ply_path, xyz, SH2RGB(shs) * 255)
+        storePly(ply_path, xyz, rgb * 255)
     try:
         pcd = fetchPly(ply_path)
     except:
